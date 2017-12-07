@@ -23,6 +23,8 @@ import org.xml.sax.InputSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static android.R.id.message;
 
@@ -40,6 +42,41 @@ public class ChatActivity extends AppCompatActivity {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu, menu);
         return true;
+    }
+
+    public void updateConversation(){
+        ParseQuery<ParseObject> query1 = new ParseQuery<ParseObject>("Message");
+        query1.whereEqualTo("sender",ParseUser.getCurrentUser().getUsername());
+        query1.whereEqualTo("receiver", receiver);
+
+        ParseQuery<ParseObject> query2 = new ParseQuery<ParseObject>("Message");
+        query2.whereEqualTo("receiver",ParseUser.getCurrentUser().getUsername());
+        query2.whereEqualTo("sender", receiver);
+
+        List<ParseQuery<ParseObject>> queries = new ArrayList<>();
+        queries.add(query1);
+        queries.add(query2);
+
+        ParseQuery<ParseObject> query = ParseQuery.or(queries);
+        query.orderByAscending("createdAt");
+
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> objects, ParseException e) {
+                if(e == null && objects.size()>0){
+                    msgs.clear();
+                    for(ParseObject o : objects){
+                        String msgContent = o.getString("message");
+                        if(o.getString("sender").equals(ParseUser.getCurrentUser().getUsername())){
+                            msgContent = "> " + msgContent;
+                        }
+                        msgs.add(msgContent);
+                    }
+
+                    adapter.notifyDataSetChanged();
+                }
+            }
+        });
     }
 
     @Override
@@ -62,38 +99,22 @@ public class ChatActivity extends AppCompatActivity {
         msgs = new ArrayList<>();
         adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1,msgs);
         listView.setAdapter(adapter);
+        updateConversation();
 
 
-        ParseQuery<ParseObject> query1 = new ParseQuery<ParseObject>("Message");
-        query1.whereEqualTo("sender",ParseUser.getCurrentUser().getUsername());
-        query1.whereEqualTo("receiver", receiver);
 
-        ParseQuery<ParseObject> query2 = new ParseQuery<ParseObject>("Message");
-        query2.whereEqualTo("receiver",ParseUser.getCurrentUser().getUsername());
-        query2.whereEqualTo("sender", receiver);
-
-        List<ParseQuery<ParseObject>> queries = new ArrayList<>();
-        queries.add(query1);
-        queries.add(query2);
-
-        ParseQuery<ParseObject> query = ParseQuery.or(queries);
-        query.orderByAscending("createdAt");
-
-        query.findInBackground(new FindCallback<ParseObject>() {
+        new Timer().schedule(new TimerTask() {
             @Override
-            public void done(List<ParseObject> objects, ParseException e) {
-                if(e == null && objects.size()>0){
-                    for(ParseObject o : objects){
-                        String msgContent = o.getString("message");
-                        if(o.getString("sender").equals(ParseUser.getCurrentUser().getUsername())){
-                            msgContent = "> " + msgContent;
-                        }
-                        msgs.add(msgContent);
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        updateConversation();
                     }
-                    adapter.notifyDataSetChanged();
-                }
+                });
             }
-        });
+        }, 0, 2000);
+
 
 
     }
