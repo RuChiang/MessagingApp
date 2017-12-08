@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -21,6 +22,9 @@ import com.parse.SignUpCallback;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static android.view.KeyEvent.ACTION_DOWN;
+import static android.view.KeyEvent.KEYCODE_ENTER;
 
 public class Login extends AppCompatActivity implements View.OnClickListener {
 
@@ -81,6 +85,28 @@ public class Login extends AppCompatActivity implements View.OnClickListener {
         layout.setOnClickListener(this);
         email.setVisibility(View.INVISIBLE);
 
+        password.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if(email.getVisibility() == View.INVISIBLE){
+                    if( keyCode == KEYCODE_ENTER && event.getAction() == ACTION_DOWN){
+                        btnclick(btn);
+                    }
+                }
+                return true;
+            }
+        });
+
+        email.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if( keyCode == KEYCODE_ENTER && event.getAction() == ACTION_DOWN){
+                    btnclick(btn);
+
+                }
+                return true;
+            }
+        });
 
 
 
